@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <ext/hash_map>
 
 using namespace std;
 
@@ -42,7 +43,7 @@ void search_route(char *graph[5000], int edge_num, char *condition);
 void resolve(char * e, int* result);
 void create_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector<neighbor> > &m);
 void resolve_demand(char *e, int &source, int &dest, vector<int> &Vs);
-vector<path> dijkstra(int source, int noList[], int noListSize);
+void dijkstra(int source, int noList[], int noListSize);
 path mergePath(path p1, path p2);
 
 #endif

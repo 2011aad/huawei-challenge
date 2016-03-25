@@ -2,7 +2,7 @@
 #include "route.h"
 
 vector< vector<neighbor> > matrix;
-vector< vector<path> > minPaths;
+__gnu_cxx::hash_map<int, path> minPaths;
 vector<int> Vs;
 int source, destination, node_num;
 
@@ -17,12 +17,12 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     //find shortest paths between different node pairs.
     int noList1[] = {destination};
     int noList2[] = {source, destination};
-    minPaths.push_back(dijkstra(source, noList1, 1));  //remove destination when calculating path from source
-    for(int i=0;i<Vs.size();i++) minPaths.push_back(dijkstra(Vs[i], noList2, 2));
+    dijkstra(source, noList1, 1); //remove destination when calculating path from source
+    for(int i=0;i<Vs.size();i++) dijkstra(Vs[i], noList2, 2);
     //remove source and destination when calculating path between nodes in Vs
     noList1[0] = source;
     //remove source when calculating path from node in Vs to destination
-    for(int i=0;i<Vs.size();i++) minPaths.push_back(dijkstra(Vs[i], noList1, 1));
+    for(int i=0;i<Vs.size();i++) dijkstra(Vs[i], noList1, 1);
 
     //-------------------------tests--------------------------------------------
     // cout<<"source: "<<source<<endl;
@@ -39,19 +39,15 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     //     }
     //     cout<<endl;
     // }
+    int i=3, j=17;
+    for(int k=0;k<minPaths[i*1000+j].nodes.size()-1;k++)
+        cout<<minPaths[i*1000+j].nodes[k]<<"->";
+    cout<<minPaths[i*1000+j].nodes[minPaths[i*1000+j].nodes.size()-1]<<endl;
+    for(int k=0;k<minPaths[i*1000+j].edges.size()-1;k++)
+        cout<<minPaths[i*1000+j].edges[k]<<"|";
+    cout<<minPaths[i*1000+j].edges[minPaths[i*1000+j].edges.size()-1]<<endl;
+    cout<<"from "<<minPaths[i*1000+j].src<<" to "<<minPaths[i*1000+j].dest<<" cost: "<<minPaths[i*1000+j].cost<<endl;
 
-    for(int i=0;i<minPaths.size();i++){
-            for(int j=0;j<minPaths[i].size();j++){
-                if(minPaths[i][j].cost==INFINITE) continue;
-                for(int k=0;k<minPaths[i][j].nodes.size()-1;k++)
-                    cout<<minPaths[i][j].nodes[k]<<"->";
-                cout<<minPaths[i][j].nodes[minPaths[i][j].nodes.size()-1]<<endl;
-                for(int k=0;k<minPaths[i][j].edges.size()-1;k++)
-                    cout<<minPaths[i][j].edges[k]<<"|";
-                cout<<minPaths[i][j].edges[minPaths[i][j].edges.size()-1]<<endl;
-                cout<<"from "<<minPaths[i][j].src<<" to "<<minPaths[i][j].dest<<" cost: "<<minPaths[i][j].cost<<endl;
-            }
-    }
     //-------------------------tests end--------------------------------------------
     for (int i = 0; i < 3; i++)
         record_result(result[i]);
@@ -120,7 +116,7 @@ void resolve_demand(char *e, int &source, int &dest, vector<int> &Vs){
 }
 
 
-vector<path> dijkstra(int s, int noList[], int noListSize){
+void dijkstra(int s, int noList[], int noListSize){
     int min, v;
     int distance[node_num];
     int prev[node_num];
@@ -167,8 +163,7 @@ vector<path> dijkstra(int s, int noList[], int noListSize){
             v = prev[v];
         }
         p.nodes.insert(p.nodes.begin(),v);
-        ps.push_back(p);
-        return ps;
+        minPaths[s*1000+destination] = p;
     }
 
     for(int i=0;i<Vs.size();i++){
@@ -184,10 +179,8 @@ vector<path> dijkstra(int s, int noList[], int noListSize){
             v = prev[v];
         }
         p.nodes.insert(p.nodes.begin(),v);
-        ps.push_back(p);
-
+        minPaths[s*1000+Vs[i]] = p;
     }
-    return ps;
 }
 
 
