@@ -36,6 +36,9 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     // p = mergePath(minPaths[key(0,2)], minPaths[key(2,3)]);
     // if(p.isLoopless()) cout<<"loopless"<<endl;
     // else cout<<"has loop"<<endl;
+    int mins[RETAIN_LEVEL];
+    path min_ps[RETAIN_LEVEL];
+
     for(int i=0;i<Vs.size();i++){
         p = minPaths[key(Vs[i],destination)];
         if(p.isLoopless()){
@@ -48,6 +51,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 
     for(int i=1;i<Vs.size();i++){           //iteration i
         //iteration_old = looplessPaths[i-1];
+      //  cout<<"iteration "<<i<<": "<<endl;
         iteration_old = iteration_new;
         iteration_new.clear();
         order_old = order_new;
@@ -61,20 +65,34 @@ void search_route(char *topo[5000], int edge_num, char *demand)
                     }
                     continue;
                 }
-                int min = INFINITE;
-                min_p = path(Vs[node_i], Vs[node_i], min);
+                for(int k=0;k<RETAIN_LEVEL;k++){
+                    mins[k] = INFINITE;
+                    min_ps[k] = path(Vs[node_i], Vs[node_i], mins[k]);
+                }
                 for(int path_j=0;path_j<iteration_old[node_l].size();path_j++){
                     if(Vs[node_i]==iteration_old[node_l][path_j].middle) continue;
                     p = mergePath(minPaths[key(Vs[node_i],order_old[node_l])], iteration_old[node_l][path_j]);
-                    if(p.isLoopless() && p.cost<min){
-                        min_p = p;
-                        min = p.cost;
+                    if(p.isLoopless()){
+                        int k=0;
+                        for(;k<RETAIN_LEVEL;k++){
+                            if(p.cost<mins[k]){
+                                break;
+                            }
+                        }
+                        if(k>=RETAIN_LEVEL) continue;
+                        for(int l=RETAIN_LEVEL-1;l>k;l--){
+                            mins[l] = mins[l-1];
+                            min_ps[l] = min_ps[l-1];
+                        }
+                        mins[k] = p.cost;
+                        min_ps[k] = p;
                     }
                 }
-                if(min_p.src != min_p.dest){
-                    tmp.push_back(min_p);
-                    //min_p.printPath();
-                }
+                for(int k=0;k<RETAIN_LEVEL;k++)
+                    if(min_ps[k].src != min_ps[k].dest){
+                        tmp.push_back(min_ps[k]);
+                        //min_p[k].printPath();
+                    }
             }
             iteration_new.push_back(tmp);
             order_new[iteration_new.size()-1] = Vs[node_i];
@@ -93,7 +111,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
         }
     }
     if(min_p.src==source && min_p.dest==destination && min_p.passNodes==Vs.size()) {
-        //min_p.printPath();
+        min_p.printPath();
         for (int i = 0; i < min_p.edges.size(); i++)
             record_result(min_p.edges[i]);
     }

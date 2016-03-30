@@ -15,6 +15,7 @@ using namespace std;
 #define DEST 2
 #define COST 3
 #define MAX_NODE_NUM 600
+#define RETAIN_LEVEL 2
 
 class neighbor{
 public:
@@ -49,7 +50,7 @@ public:
     }
 
     void printPath(){
-        cout<<"from "<<src<<" to "<<dest<<" cost: "<<cost<<endl;
+        cout<<"from "<<src<<" to "<<dest<<" cost: "<<cost<<" Pass "<<passNodes<<" nodes"<<endl;
         for(int k=0;k<nodes.size()-1;k++)
             cout<<nodes[k]<<"->";
         cout<<nodes[nodes.size()-1]<<endl;
