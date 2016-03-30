@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <ext/hash_map>
+#include <algorithm>
 
 using namespace std;
 
@@ -50,7 +51,7 @@ public:
     }
 
     void printPath(){
-        cout<<"from "<<src<<" to "<<dest<<" cost: "<<cost<<" Pass "<<passNodes<<" nodes"<<endl;
+        cout<<"from "<<src<<" to "<<dest<<" cost: "<<cost<<endl;
         for(int k=0;k<nodes.size()-1;k++)
             cout<<nodes[k]<<"->";
         cout<<nodes[nodes.size()-1]<<endl;
@@ -70,7 +71,8 @@ void search_route(char *graph[5000], int edge_num, char *condition);
 void resolve(char * e, int* result);
 void create_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector<neighbor> > &m);
 void resolve_demand(char *e, int &source, int &dest, vector<int> &Vs);
-void dijkstra(int source, int noList[], int noListSize);
+void dijkstra(int s, int d);
 path mergePath(path p1, path p2);
+bool mySort(const path &p1, const path &p2);
 
 #endif

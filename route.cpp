@@ -7,7 +7,7 @@ vector< vector<neighbor> > matrix;
 __gnu_cxx::hash_map<int, path> minPaths;
 __gnu_cxx::hash_map<int, int> node_vs;
 vector<int> Vs;
-int source, destination, node_num;
+int source, destination, node_num, total_weight;
 
 //你要完成的功能总入口
 void search_route(char *topo[5000], int edge_num, char *demand)
@@ -16,104 +16,83 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     create_matrix(topo, edge_num, node_num, matrix);
     resolve_demand(demand, source, destination, Vs);
 
-    for(int i=0;i<Vs.size();i++) node_vs[Vs[i]] = 0;
+    //for(int i=0;i<Vs.size();i++) node_vs[Vs[i]] = 0;
     //find shortest paths between different node pairs.
-    int noList1[1] = {destination};
-    int noList2[2] = {source,destination};
-    dijkstra(source, noList1, 1); //remove destination when calculating path from source
-    //remove source and destination when calculating path between nodes in Vs
-    for(int i=0;i<Vs.size();i++) dijkstra(Vs[i], noList2, 2);
-    //remove source when calculating path from node in Vs to destination
-    noList1[0] = source;
-    for(int i=0;i<Vs.size();i++) dijkstra(Vs[i], noList1, 1);
-    //cout<<"Find shortest path between nodes success!"<<endl;
-
-    //vector< vector< vector<path> > >looplessPaths;
-    vector< vector<path> > iteration_old, iteration_new;
-    vector<path> tmp;
-    path p, min_p;
-    __gnu_cxx::hash_map<int, int> order_old, order_new;
-    // p = mergePath(minPaths[key(0,2)], minPaths[key(2,3)]);
-    // if(p.isLoopless()) cout<<"loopless"<<endl;
-    // else cout<<"has loop"<<endl;
-    int mins[RETAIN_LEVEL];
-    path min_ps[RETAIN_LEVEL];
-
     for(int i=0;i<Vs.size();i++){
-        p = minPaths[key(Vs[i],destination)];
-        if(p.isLoopless()){
-            tmp.push_back(p);
-            iteration_new.push_back(tmp);
-            order_new[iteration_new.size()-1] = Vs[i];
-        }
-        //looplessPaths.push_back(iteration_new);
+        dijkstra(source, Vs[i]);
+        // if(minPaths.find(key(source,Vs[i])) != minPaths.end())
+        //     minPaths[key(source,Vs[i])].printPath();
     }
 
-    for(int i=1;i<Vs.size();i++){           //iteration i
-        //iteration_old = looplessPaths[i-1];
-      //  cout<<"iteration "<<i<<": "<<endl;
+    for(int i=0;i<Vs.size();i++){
+        for(int j=0;j<Vs.size();j++){
+            if(j==i) continue;
+            else{
+                dijkstra(Vs[i], Vs[j]);
+                // if(minPaths.find(key(Vs[i],Vs[j])) != minPaths.end())
+                //     minPaths[key(Vs[i],Vs[j])].printPath();
+            }
+        }
+    }
+
+    for(int i=0;i<Vs.size();i++){
+        dijkstra(Vs[i], destination);
+        // if(minPaths.find(key(Vs[i], destination)) != minPaths.end())
+        //     minPaths[key(Vs[i], destination)].printPath();
+    }
+
+    vector<path> iteration_old, iteration_new;
+    path p;
+    for(int i=0;i<Vs.size();i++){
+        if(minPaths.find(key(source,Vs[i])) != minPaths.end()){
+            p = minPaths[key(source,Vs[i])];
+            if(p.isLoopless()) iteration_new.push_back(p);
+        }
+
+    }
+
+    for(int it=1;it<Vs.size() && iteration_new.size()>0;it++){
+        cout<<"iteration: "<<it<<':'<<endl;
+        cout<<"           queue length: "<<iteration_new.size()<<endl;
         iteration_old = iteration_new;
         iteration_new.clear();
-        order_old = order_new;
-        order_new.clear();
-        for(int node_i=0;node_i<Vs.size();node_i++){
-            tmp.clear();
-            for(int node_l=0;node_l<iteration_old.size();node_l++){
-                if(order_old[node_l]==Vs[node_i]){
-                    for(int path_j=0;path_j<iteration_old[node_l].size();path_j++){
-                        if(iteration_old[node_l][path_j].passNodes>=i) tmp.push_back(iteration_old[node_l][path_j]);
-                    }
-                    continue;
-                }
-                for(int k=0;k<RETAIN_LEVEL;k++){
-                    mins[k] = INFINITE;
-                    min_ps[k] = path(Vs[node_i], Vs[node_i], mins[k]);
-                }
-                for(int path_j=0;path_j<iteration_old[node_l].size();path_j++){
-                    if(Vs[node_i]==iteration_old[node_l][path_j].middle) continue;
-                    p = mergePath(minPaths[key(Vs[node_i],order_old[node_l])], iteration_old[node_l][path_j]);
-                    if(p.isLoopless()){
-                        int k=0;
-                        for(;k<RETAIN_LEVEL;k++){
-                            if(p.cost<mins[k]){
-                                break;
-                            }
-                        }
-                        if(k>=RETAIN_LEVEL) continue;
-                        for(int l=RETAIN_LEVEL-1;l>k;l--){
-                            mins[l] = mins[l-1];
-                            min_ps[l] = min_ps[l-1];
-                        }
-                        mins[k] = p.cost;
-                        min_ps[k] = p;
-                    }
-                }
-                for(int k=0;k<RETAIN_LEVEL;k++)
-                    if(min_ps[k].src != min_ps[k].dest){
-                        tmp.push_back(min_ps[k]);
-                        //min_p[k].printPath();
-                    }
+        for(int i=0;i<iteration_old.size();i++){
+            if(iteration_old.size()>200){
+                sort(iteration_old.begin(),iteration_old.end(),mySort);
+                iteration_old.erase(iteration_old.begin()+200, iteration_old.end());
             }
-            iteration_new.push_back(tmp);
-            order_new[iteration_new.size()-1] = Vs[node_i];
+            for(int j=0;j<Vs.size();j++){
+                if(iteration_old[i].dest==Vs[j]) continue;
+                if(minPaths.find(key(iteration_old[i].dest, Vs[j])) != minPaths.end()){
+                    p = mergePath(iteration_old[i], minPaths[key(iteration_old[i].dest, Vs[j])]);
+                    if(p.isLoopless()) iteration_new.push_back(p);
+                }
+            }
         }
     }
 
     int min = INFINITE;
-    min_p = path(source, source, min);
-    for(int node_i=0;node_i<iteration_new.size();node_i++){
-        for(int path_l=0;path_l<iteration_new[node_i].size();path_l++){
-            p = mergePath(minPaths[key(source,iteration_new[node_i][path_l].src)], iteration_new[node_i][path_l]);
-            if(p.isLoopless() && p.cost<min && p.passNodes==Vs.size()){
-                min_p = p;
+    if(iteration_new.size()==0) return;
+    p = path(source, source ,0);
+    for(int i=0;i<iteration_new.size();i++){
+        if(minPaths.find(key(iteration_new[i].dest, destination)) != minPaths.end()){
+            if(iteration_new[i].cost + minPaths[key(iteration_new[i].dest, destination)].cost < min){
+                p = mergePath(iteration_new[i], minPaths[key(iteration_new[i].dest, destination)]);
                 min = p.cost;
             }
         }
     }
-    if(min_p.src==source && min_p.dest==destination && min_p.passNodes==Vs.size()) {
-        min_p.printPath();
-        for (int i = 0; i < min_p.edges.size(); i++)
-            record_result(min_p.edges[i]);
+
+
+    // p = mergePath(minPaths[key(0,2)], minPaths[key(2,3)]);
+    // if(p.isLoopless()) cout<<"loopless"<<endl;
+    // else cout<<"has loop"<<endl;
+
+
+    if(p.src==source && p.dest==destination) {
+        p.printPath();
+        for (int i = 0; i < p.edges.size(); i++)
+            record_result(p.edges[i]);
     }
 
 
@@ -132,14 +111,6 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     //     }
     //     cout<<endl;
     // }
-    // int i=2, j=3;
-    // for(int k=0;k<minPaths[key(i,j)].nodes.size()-1;k++)
-    //     cout<<minPaths[key(i,j)].nodes[k]<<"->";
-    // cout<<minPaths[key(i,j)].nodes[minPaths[key(i,j)].nodes.size()-1]<<endl;
-    // for(int k=0;k<minPaths[key(i,j)].edges.size()-1;k++)
-    //     cout<<minPaths[key(i,j)].edges[k]<<"|";
-    // cout<<minPaths[key(i,j)].edges[minPaths[key(i,j)].edges.size()-1]<<endl;
-    // cout<<"from "<<minPaths[key(i,j)].src<<" to "<<minPaths[key(i,j)].dest<<" cost: "<<minPaths[key(i,j)].cost<<endl;
 
     //-------------------------tests end--------------------------------------------
 
@@ -209,7 +180,7 @@ void resolve_demand(char *e, int &source, int &dest, vector<int> &Vs){
 }
 
 
-void dijkstra(int s, int noList[], int noListSize){
+void dijkstra(int s, int d){
     int min, v;
     int distance[node_num];
     int prev[node_num];
@@ -221,13 +192,17 @@ void dijkstra(int s, int noList[], int noListSize){
         distance[i] = INFINITE;
         known[i] = false;
         prev[i] = i;
-        edge[node_num] = -1;
+        edge[i] = -1;
     }
-    for(int i=0;i<noListSize;i++) known[noList[i]] = true;
+    for(int i=0;i<Vs.size();i++){
+        if(Vs[i] != s && Vs[i] != d) known[Vs[i]] = true;
+    }
+    if(s != source) known[source] = true;
+    if(d != destination) known[destination] = true;
 
     distance[s] = 0;
 
-    for(int i=1;i<(node_num-noListSize);i++){
+    for(int i=1;i<node_num-Vs.size();i++){
         min = INFINITE+1;
         for(int j=0;j<node_num;j++){
             if(!known[j] && distance[j]<min){
@@ -236,9 +211,11 @@ void dijkstra(int s, int noList[], int noListSize){
             }
         }
 
+        if(v==d) break;
         known[v] = true;
         for(int j=0;j<matrix[v].size();j++){
-            if(distance[v]<INFINITE && !known[matrix[v][j].vertex] && distance[matrix[v][j].vertex]>min+matrix[v][j].cost){
+            if(distance[v]>=INFINITE) break;
+            if(!known[matrix[v][j].vertex] && distance[matrix[v][j].vertex]>min+matrix[v][j].cost){
                 distance[matrix[v][j].vertex] = min+matrix[v][j].cost;
                 prev[matrix[v][j].vertex] = v;
                 edge[matrix[v][j].vertex] = matrix[v][j].LinkID;
@@ -246,37 +223,16 @@ void dijkstra(int s, int noList[], int noListSize){
         }
     }
 
-    //save path to destination only when calculating path from Vs nodes to destination
-    if(s != source && noListSize==1 && distance[destination]<INFINITE){
-        p = path(s, destination, distance[destination]);
-        v = destination;
-        while(v!=s){
-            p.nodes.insert(p.nodes.begin(),v);
-            p.edges.insert(p.edges.begin(),edge[v]);
-            v = prev[v];
-        }
+    p = path(s, d, distance[d]);
+    v = d;
+    while(v!=s){
         p.nodes.insert(p.nodes.begin(),v);
-        p.count(node_vs);
-        minPaths[key(s,destination)] = p;
-        return;
+        p.edges.insert(p.edges.begin(),edge[v]);
+        if(v==prev[v]) return;
+        v = prev[v];
     }
-
-    for(int i=0;i<Vs.size();i++){
-        if(s==Vs[i] || distance[Vs[i]]>=INFINITE) continue;
-        p = path(s, Vs[i], distance[Vs[i]]);
-        if(distance[Vs[i]]==INFINITE)
-            continue;
-
-        v = Vs[i];
-        while(v!=s){
-            p.nodes.insert(p.nodes.begin(),v);
-            p.edges.insert(p.edges.begin(),edge[v]);
-            v = prev[v];
-        }
-        p.nodes.insert(p.nodes.begin(),v);
-        p.count(node_vs);
-        minPaths[key(s,Vs[i])] = p;
-    }
+    p.nodes.insert(p.nodes.begin(),s);
+    minPaths[key(s,d)] = p;
 }
 
 
@@ -305,4 +261,8 @@ path mergePath(path p1, path p2){
     p.middle = p2.src;
 
     return p;
+}
+
+bool mySort(const path &p1, const path &p2){
+    return p1.cost<p2.cost;
 }
