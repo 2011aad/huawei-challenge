@@ -42,7 +42,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     }
 
     vector<path> iteration_old, iteration_new;
-    path p;
+    path p, tmp;
     for(int i=0;i<Vs.size();i++){
         if(minPaths.find(key(source,Vs[i])) != minPaths.end()){
             p = minPaths[key(source,Vs[i])];
@@ -52,8 +52,8 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     }
 
     for(int it=1;it<Vs.size() && iteration_new.size()>0;it++){
-        cout<<"iteration: "<<it<<':'<<endl;
-        cout<<"           queue length: "<<iteration_new.size()<<endl;
+        // cout<<"iteration: "<<it<<':'<<endl;
+        // cout<<"           queue length: "<<iteration_new.size()<<endl;
         iteration_old = iteration_new;
         iteration_new.clear();
         for(int i=0;i<iteration_old.size();i++){
@@ -65,7 +65,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
                 if(iteration_old[i].dest==Vs[j]) continue;
                 if(minPaths.find(key(iteration_old[i].dest, Vs[j])) != minPaths.end()){
                     p = mergePath(iteration_old[i], minPaths[key(iteration_old[i].dest, Vs[j])]);
-                    if(p.isLoopless()) iteration_new.push_back(p);
+                    if(p.isLoopless() && p.passNodes==it) iteration_new.push_back(p);
                 }
             }
         }
@@ -77,8 +77,11 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     for(int i=0;i<iteration_new.size();i++){
         if(minPaths.find(key(iteration_new[i].dest, destination)) != minPaths.end()){
             if(iteration_new[i].cost + minPaths[key(iteration_new[i].dest, destination)].cost < min){
-                p = mergePath(iteration_new[i], minPaths[key(iteration_new[i].dest, destination)]);
-                min = p.cost;
+                tmp = mergePath(iteration_new[i], minPaths[key(iteration_new[i].dest, destination)]);
+                if(tmp.isLoopless()){
+                    p = tmp;
+                    min = p.cost;
+                }
             }
         }
     }
@@ -89,8 +92,8 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     // else cout<<"has loop"<<endl;
 
 
-    if(p.src==source && p.dest==destination) {
-        p.printPath();
+    if(p.src==source && p.dest==destination && p.passNodes==Vs.size()) {
+        //p.printPath();
         for (int i = 0; i < p.edges.size(); i++)
             record_result(p.edges[i]);
     }
@@ -257,7 +260,7 @@ path mergePath(path p1, path p2){
     for(int i=0;i<p2.edges.size();i++){
         p.edges.push_back(p2.edges[i]);
     }
-    p.passNodes = p1.passNodes + p2.passNodes;
+    p.passNodes = p1.passNodes + 1;
     p.middle = p2.src;
 
     return p;
