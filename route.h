@@ -16,7 +16,6 @@ using namespace std;
 #define DEST 2
 #define COST 3
 #define MAX_NODE_NUM 600
-#define RETAIN_LEVEL 2
 
 class neighbor{
 public:
