@@ -59,10 +59,12 @@ public:
         cout<<edges[edges.size()-1]<<endl;
     }
 
-    void count(__gnu_cxx::hash_map<int, int> node_vs){
+    int count(__gnu_cxx::hash_map<int, int> &node_vs){
+        passNodes = 0;
         for(int i=1;i<nodes.size();i++){
             if(node_vs.find(nodes[i]) != node_vs.end()) passNodes++;
         }
+        return passNodes;
     }
 };
 
@@ -72,6 +74,7 @@ void create_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector
 void resolve_demand(char *e, int &source, int &dest, vector<int> &Vs);
 void dijkstra(int s, int d);
 path mergePath(path p1, path p2);
+void bad_search_route();
 bool mySort(const path &p1, const path &p2);
 
 #endif

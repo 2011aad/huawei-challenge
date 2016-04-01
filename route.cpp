@@ -27,7 +27,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
         MIN_PATH_NUM = 3;
     }
     else if(Vs.size()<=30){
-        total_path_num = 200;
+        total_path_num = 300;
         MIN_PATH_NUM = 2;
     }
     else if(Vs.size()<=40){
@@ -162,6 +162,9 @@ void search_route(char *topo[5000], int edge_num, char *demand)
         for (int i = 0; i < p.edges.size(); i++)
             record_result(p.edges[i]);
     }
+    else{
+        bad_search_route();
+    }
 
 
     //-------------------------tests--------------------------------------------
@@ -181,7 +184,80 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     // }
 
     //-------------------------tests end--------------------------------------------
+}
 
+void bad_search_route(){
+    for(int i=0;i<Vs.size();i++){
+        node_vs[Vs[i]] = i;
+    }
+
+    minPaths.clear();
+    vector<path> iteration_old, iteration_new, full;
+    path p, tmp;
+    int path_num = 1000;
+    for(int i=0;i<node_num;i++){
+        for(int j=0;j<matrix[i].size();j++){
+            p = path(i,matrix[i][j].vertex,matrix[i][j].cost);
+            p.nodes.push_back(i);
+            p.nodes.push_back(matrix[i][j].vertex);
+            p.edges.push_back(matrix[i][j].LinkID);
+            minPaths[key(i,matrix[i][j].vertex)] = p;
+        }
+    }
+
+     for(int i=0;i<node_num;i++){
+         if(i==destination || i==source) continue;
+         if(minPaths.find(key(source,i)) != minPaths.end()){
+             p = minPaths[key(source,i)];
+             if(p.isLoopless()) iteration_new.push_back(p);
+         }
+     }
+
+
+     for(int it=1;it<node_num-2 && iteration_new.size()>0;it++){
+        //  cout<<"iteration: "<<it<<':'<<endl;
+        //  cout<<"           queue length: "<<full.size()<<endl;
+         iteration_old = iteration_new;
+         iteration_new.clear();
+         if(iteration_old.size()>path_num){
+             sort(iteration_old.begin(),iteration_old.end(),mySort);
+             iteration_old.erase(iteration_old.begin()+path_num, iteration_old.end());
+         }
+         for(int i=0;i<iteration_old.size();i++){
+             for(int j=0;j<node_num;j++){
+                 if(iteration_old[i].dest==j || j==destination || j==source) continue;
+                 if(minPaths.find(key(iteration_old[i].dest, j)) != minPaths.end()){
+                     p = mergePath(iteration_old[i], minPaths[key(iteration_old[i].dest, j)]);
+                     if(p.isLoopless()){
+                         if(p.count(node_vs)==Vs.size()) full.push_back(p);
+                         else iteration_new.push_back(p);
+                     }
+                 }
+             }
+         }
+     }
+
+     int min = INFINITE;
+     if(full.size()==0) return;
+     p = path(source, source ,0);
+     for(int i=0;i<full.size();i++){
+         if(minPaths.find(key(full[i].dest, destination)) != minPaths.end()){
+             if(full[i].cost + minPaths[key(full[i].dest, destination)].cost < min){
+                 tmp = mergePath(full[i], minPaths[key(full[i].dest, destination)]);
+                 if(tmp.isLoopless() && tmp.count(node_vs)==Vs.size()){
+                     p = tmp;
+                     min = p.cost;
+                 }
+             }
+         }
+     }
+
+
+    if(p.src==source && p.dest==destination) {
+        //p.printPath();
+        for (int i = 0; i < p.edges.size(); i++)
+            record_result(p.edges[i]);
+    }
 }
 
 //Create a list of node, with its neighbors as sub-list.
@@ -326,7 +402,6 @@ path mergePath(path p1, path p2){
         p.edges.push_back(p2.edges[i]);
     }
     p.passNodes = p1.passNodes + 1;
-    p.middle = p2.src;
 
     return p;
 }
