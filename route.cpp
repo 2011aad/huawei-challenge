@@ -15,6 +15,10 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     //use node_num as the number of nodes.
     create_matrix(topo, edge_num, node_num, matrix);
     resolve_demand(demand, source, destination, Vs);
+    int path_num;
+    if(Vs.size()<=10) path_num = 1000;
+    else if(Vs.size()<=17) path_num = 800;
+    else path_num = 200;
 
     //for(int i=0;i<Vs.size();i++) node_vs[Vs[i]] = 0;
     //find shortest paths between different node pairs.
@@ -57,9 +61,9 @@ void search_route(char *topo[5000], int edge_num, char *demand)
         iteration_old = iteration_new;
         iteration_new.clear();
         for(int i=0;i<iteration_old.size();i++){
-            if(iteration_old.size()>200){
+            if(iteration_old.size()>path_num){
                 sort(iteration_old.begin(),iteration_old.end(),mySort);
-                iteration_old.erase(iteration_old.begin()+200, iteration_old.end());
+                iteration_old.erase(iteration_old.begin()+path_num, iteration_old.end());
             }
             for(int j=0;j<Vs.size();j++){
                 if(iteration_old[i].dest==Vs[j]) continue;
