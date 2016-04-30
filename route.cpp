@@ -15,11 +15,10 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
     // unsigned short result2[] = {5, 6, 2};//P''路径
     int total_path_num = 1000;
     int final_path_num = 100;
-    int MIN_PATH_NUM = 20;
+    int MIN_PATH_NUM = 10;
     //use node_num as the number of nodes.
     create_matrix(topo, edge_num, node_num, matrix);
     resolve_demand(demand, source, destination, Vs);
-    cout<<Vs[0].size()<<' '<<Vs[1].size()<<endl;
 
     for(int i=0;i<MAX_DEMAND_NUM;i++){
         for(int j=0;j<Vs[i].size();j++){
@@ -77,7 +76,7 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
     for(int d=0;d<MAX_DEMAND_NUM;d++){
         iteration_old.clear();
         iteration_new.clear();
-        for(int i=0;i<Vs.size();i++){
+        for(int i=0;i<Vs[d].size();i++){
             pathsToSpeNode.clear();
             if(minPaths.find(key(source,Vs[d][i])) != minPaths.end()){
                 p = minPaths[key(source,Vs[d][i])];
@@ -145,7 +144,7 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
             if(iteration_new[i].size()==0 || minPaths.find(key(iteration_new[i][0].dest, destination)) == minPaths.end()) continue;
             for(int j=0;j<iteration_new[i].size();j++){
                 tmp = mergePath(iteration_new[i][j], minPaths[key(iteration_new[i][j].dest, destination)]);
-                if(tmp.isLoopless()){
+                if(tmp.isLoopless() && tmp.count(node_vs[d])==Vs[d].size()){
                     pathset[d].push_back(tmp);
                 }
             }
