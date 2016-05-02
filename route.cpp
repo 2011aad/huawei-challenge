@@ -13,9 +13,9 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
 {
     // unsigned short result1[] = {0, 1, 2};//P'路径
     // unsigned short result2[] = {5, 6, 2};//P''路径
-    int total_path_num = 1000;
+    int total_path_num = 1500;
     int final_path_num = 100;
-    int MIN_PATH_NUM = 10;
+    int MIN_PATH_NUM = 50;
     //use node_num as the number of nodes.
     create_matrix(topo, edge_num, node_num, matrix);
     resolve_demand(demand, source, destination, Vs);
@@ -88,11 +88,11 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
         }
 
         for(int it=1;it<Vs[d].size() && iteration_new.size()>0;it++){
-            cout<<"iteration: "<<it<<':'<<endl;
+            //cout<<"iteration: "<<it<<':'<<endl;
 
             int t = 0;
             for(int i=0;i<iteration_new.size();i++) t += iteration_new[i].size();
-            cout<<"           queue length: "<<t<<endl;
+            //cout<<"           queue length: "<<t<<endl;
 
             iteration_old.clear();
             pathsToSpeNode.clear();
@@ -296,12 +296,15 @@ void dijkstra(int s, int d, int setflag){
     for(int i=0;i<Vs[setflag].size();i++){
         if(Vs[setflag][i] != s && Vs[setflag][i] != d) known[Vs[setflag][i]] = true;
     }
+    for(int i=0;i<Vs[1-setflag].size();i++){
+        known[Vs[1-setflag][i]] = true;
+    }
     if(s != source) known[source] = true;
     if(d != destination) known[destination] = true;
 
     distance[s] = 0;
 
-    for(int i=1;i<node_num-Vs[setflag].size();i++){
+    for(int i=1;i<node_num-Vs[setflag].size()-Vs[1-setflag].size();i++){
         min = INFINITE+1;
         for(int j=0;j<node_num;j++){
             if(!known[j] && distance[j]<min){
