@@ -5,6 +5,7 @@
 vector< vector<neighbor> > matrix;
 __gnu_cxx::hash_map<int, path> minPaths;
 __gnu_cxx::hash_map<int, int> node_vs[MAX_DEMAND_NUM];
+__gnu_cxx::hash_map<int, int> inode_vs[MAX_DEMAND_NUM];
 vector< vector<int> > Vs;
 int source, destination, node_num, total_weight;
 
@@ -13,12 +14,14 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
 {
     // unsigned short result1[] = {0, 1, 2};//P'路径
     // unsigned short result2[] = {5, 6, 2};//P''路径
-    int total_path_num = 1500;
+    int total_path_num = 1000;
     int final_path_num = 100;
-    int MIN_PATH_NUM = 50;
+    int MIN_PATH_NUM = 20;
     //use node_num as the number of nodes.
     create_matrix(topo, edge_num, node_num, matrix);
     resolve_demand(demand, source, destination, Vs);
+    int ite_num[Vs.size()];
+    for(int i=0;i<Vs.size();i++) ite_num[i] = Vs[i].size()/2+1;
 
     for(int i=0;i<MAX_DEMAND_NUM;i++){
         for(int j=0;j<Vs[i].size();j++){
@@ -43,14 +46,14 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
     }
 
 
-    for(int i=0;i<MAX_DEMAND_NUM;i++){
-        for(int j=0;j<Vs[i].size();j++){
-            dijkstra(Vs[i][j], destination ,i);
-            //node_vs[Vs[i]] = i;
-            // if(minPaths.find(key(source,Vs[i][j])) != minPaths.end())
-            //     minPaths[key(source,Vs[i][j])].printPath();
-        }
-    }
+    // for(int i=0;i<MAX_DEMAND_NUM;i++){
+    //     for(int j=0;j<Vs[i].size();j++){
+    //         dijkstra(Vs[i][j], destination ,i);
+    //         //node_vs[Vs[i]] = i;
+    //         // if(minPaths.find(key(source,Vs[i][j])) != minPaths.end())
+    //         //     minPaths[key(source,Vs[i][j])].printPath();
+    //     }
+    // }
 
     // for(int i=0;i<node_num;i++){
     //     cout<<"neighbor for node "<<i<<':'<<endl;
@@ -70,6 +73,7 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
     // cout<<endl;
 
     vector< vector<path> > iteration_old, iteration_new;
+    vector< vector<path> > tmp1_paths[Vs.size()], tmp2_paths[Vs.size()];
     vector<path> pathsToSpeNode;
     vector<path> pathset[MAX_DEMAND_NUM];
     path p, tmp;
@@ -87,12 +91,12 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
             iteration_new.push_back(pathsToSpeNode);
         }
 
-        for(int it=1;it<Vs[d].size() && iteration_new.size()>0;it++){
-            //cout<<"iteration: "<<it<<':'<<endl;
+        for(int it=1;it<ite_num[d] && iteration_new.size()>0;it++){
+            cout<<"iteration: "<<it<<':'<<endl;
 
             int t = 0;
             for(int i=0;i<iteration_new.size();i++) t += iteration_new[i].size();
-            //cout<<"           queue length: "<<t<<endl;
+            cout<<"           queue length: "<<t<<endl;
 
             iteration_old.clear();
             pathsToSpeNode.clear();
@@ -127,34 +131,160 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
             pathsToSpeNode.clear();
             for(int i=0;i<Vs[d].size();i++) iteration_new.push_back(pathsToSpeNode);
 
+
             for(int i=0;i<iteration_old.size();i++){
                 for(int k=0;k<iteration_old[i].size();k++){
                     for(int j=0;j<Vs[d].size();j++){
                         if(iteration_old[i][k].dest==Vs[d][j]) continue;
                         if(minPaths.find(key(iteration_old[i][k].dest, Vs[d][j])) != minPaths.end()){
                             p = mergePath(iteration_old[i][k], minPaths[key(iteration_old[i][k].dest, Vs[d][j])]);
-                            if(p.isLoopless() && p.passNodes==it) iteration_new[j].push_back(p);
+                            if(p.isLoopless()) iteration_new[j].push_back(p);
                         }
                     }
                 }
             }
         }
+        tmp1_paths[d] = iteration_new;
 
-        for(int i=0;i<iteration_new.size();i++){
-            if(iteration_new[i].size()==0 || minPaths.find(key(iteration_new[i][0].dest, destination)) == minPaths.end()) continue;
-            for(int j=0;j<iteration_new[i].size();j++){
-                tmp = mergePath(iteration_new[i][j], minPaths[key(iteration_new[i][j].dest, destination)]);
-                if(tmp.isLoopless() && tmp.count(node_vs[d])==Vs[d].size()){
-                    pathset[d].push_back(tmp);
+        // for(int i=0;i<iteration_new.size();i++){
+        //     if(iteration_new[i].size()==0 || minPaths.find(key(iteration_new[i][0].dest, destination)) == minPaths.end()) continue;
+        //     for(int j=0;j<iteration_new[i].size();j++){
+        //         tmp = mergePath(iteration_new[i][j], minPaths[key(iteration_new[i][j].dest, destination)]);
+        //         if(tmp.isLoopless() && tmp.count(node_vs[d])==Vs[d].size()){
+        //             pathset[d].push_back(tmp);
+        //         }
+        //     }
+        // }
+        //
+        // if(pathset[d].size()>final_path_num){
+        //     sort(pathset[d].begin(),pathset[d].end(),mySort);
+        //     pathset[d].erase(pathset[d].begin()+final_path_num, pathset[d].end());
+        // }
+    }
+    cout<<"inverse: "<<endl;
+
+    matrix.clear();
+    minPaths.clear();
+    create_inverse_matrix(topo, edge_num, node_num, matrix);
+    // for(int i=0;i<node_num;i++){
+    //     cout<<"neighbor for node "<<i<<':'<<endl;
+    //     for(int j=0;j<matrix[i].size();j++){
+    //         cout<<matrix[i][j].vertex<<':'<<matrix[i][j].cost<<' ';
+    //     }
+    //     cout<<endl;
+    // }
+    for(int i=0;i<MAX_DEMAND_NUM;i++){
+        for(int j=0;j<Vs[i].size();j++){
+            dijkstra(destination, Vs[i][j],i);
+            inode_vs[i][Vs[i][j]] = j;
+            // if(minPaths.find(key(destination,Vs[i][j])) != minPaths.end())
+            //     minPaths[key(destination,Vs[i][j])].printPath();
+        }
+    }
+
+    for(int k=0;k<MAX_DEMAND_NUM;k++){
+        for(int i=0;i<Vs[k].size();i++){
+            for(int j=0;j<Vs[k].size();j++){
+                if(j==i) continue;
+                else{
+                    dijkstra(Vs[k][i], Vs[k][j], k);
                 }
             }
         }
+    }
 
+    for(int d=0;d<MAX_DEMAND_NUM;d++){
+        iteration_old.clear();
+        iteration_new.clear();
+        for(int i=0;i<Vs[d].size();i++){
+            pathsToSpeNode.clear();
+            if(minPaths.find(key(destination,Vs[d][i])) != minPaths.end()){
+                p = minPaths[key(destination,Vs[d][i])];
+                if(p.isLoopless()){
+                    pathsToSpeNode.push_back(p);
+                }
+            }
+            iteration_new.push_back(pathsToSpeNode);
+        }
+
+        for(int it=1;it<Vs[d].size()-ite_num[d]+1 && iteration_new.size()>0;it++){
+            cout<<"iteration: "<<it<<':'<<endl;
+
+            int t = 0;
+            for(int i=0;i<iteration_new.size();i++) t += iteration_new[i].size();
+            cout<<"           queue length: "<<t<<endl;
+
+            iteration_old.clear();
+            pathsToSpeNode.clear();
+            for(int i=0;i<Vs[d].size();i++) iteration_old.push_back(pathsToSpeNode);
+
+            if(t>total_path_num){
+                for(int i=0;i<iteration_new.size();i++){
+                    if(iteration_new[i].size()>MIN_PATH_NUM){
+                        sort(iteration_new[i].begin(),iteration_new[i].end(),mySort);
+                        int j;
+                        for(j=0;j<MIN_PATH_NUM;j++){
+                            iteration_old[i].push_back(iteration_new[i][j]);
+                        }
+                        for(;j<iteration_new[i].size();j++) pathsToSpeNode.push_back(iteration_new[i][j]);
+                    }
+                    else iteration_old[i] = iteration_new[i];
+                    iteration_new[i].clear();
+                }
+                if(pathsToSpeNode.size()>total_path_num){
+                    sort(pathsToSpeNode.begin(),pathsToSpeNode.end(),mySort);
+                    pathsToSpeNode.erase(pathsToSpeNode.begin()+total_path_num, pathsToSpeNode.end());
+                }
+                for(int i=0;i<pathsToSpeNode.size();i++){
+                    iteration_old[inode_vs[d][pathsToSpeNode[i].dest]].push_back(pathsToSpeNode[i]);
+                }
+            }
+            else{
+                iteration_old = iteration_new;
+            }
+
+            iteration_new.clear();
+            pathsToSpeNode.clear();
+            for(int i=0;i<Vs[d].size();i++) iteration_new.push_back(pathsToSpeNode);
+
+
+            for(int i=0;i<iteration_old.size();i++){
+                for(int k=0;k<iteration_old[i].size();k++){
+                    for(int j=0;j<Vs[d].size();j++){
+                        if(iteration_old[i][k].dest==Vs[d][j]) continue;
+                        if(minPaths.find(key(iteration_old[i][k].dest, Vs[d][j])) != minPaths.end()){
+                            p = mergePath(iteration_old[i][k], minPaths[key(iteration_old[i][k].dest, Vs[d][j])]);
+                            if(p.isLoopless()) iteration_new[j].push_back(p);
+                        }
+                    }
+                }
+            }
+        }
+        tmp2_paths[d] = iteration_new;
+    }
+
+    for(int d=0;d<Vs.size();d++){
+        for(int i=0;i<tmp2_paths[d].size();i++){
+            for(int j=0;j<tmp2_paths[d][i].size();j++){
+                int index = node_vs[d][tmp2_paths[d][i][j].dest];
+                tmp2_paths[d][i][j].reverse();
+                //tmp2_paths[d][i][j].printPath();
+                //tmp1_paths[d][index][0].printPath();
+                for(int k=0;k<tmp1_paths[d][index].size();k++){
+                    tmp = mergePath(tmp1_paths[d][index][k], tmp2_paths[d][i][j]);
+                    if(tmp.isLoopless()){
+                        pathset[d].push_back(tmp);
+                        tmp.printPath();
+                    }
+                }
+            }
+        }
         if(pathset[d].size()>final_path_num){
             sort(pathset[d].begin(),pathset[d].end(),mySort);
-            pathset[d].erase(pathset[d].begin()+final_path_num, pathset[d].end());
+            pathset[d].erase(pathset[d].begin()+final_path_num,pathset[d].end());
         }
     }
+    //pathset[0][0].printPath();
 
     cout<<pathset[0].size()<<' '<<pathset[1].size()<<endl;
     int min_same_edge = INFINITE, min_cost = INFINITE;
@@ -209,6 +339,7 @@ void search_route(char *topo[MAX_EDGE_NUM], int edge_num, char *demand[MAX_DEMAN
 
 //Create a list of node, with its neighbors as sub-list.
 void create_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector<neighbor> > &m){
+    node_num = 0;
     vector<neighbor> degrees;
     neighbor n;
     int edge[4];
@@ -223,6 +354,24 @@ void create_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector
     node_num++;
     //cout<<"Create matrix success!"<<endl;
 }
+
+void create_inverse_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector<neighbor> > &m){
+    node_num = 0;
+    vector<neighbor> degrees;
+    neighbor n;
+    int edge[4];
+    for(int i=0;i<MAX_NODE_NUM;i++) m.push_back(degrees);
+    for(int i=0;i<edge_num;i++){
+        resolve(topo[i], edge);
+        n = neighbor(edge[SOURCE],edge[ID],edge[COST]);
+        m[edge[DEST]].push_back(n);
+        if(edge[SOURCE]>node_num) node_num = edge[SOURCE];
+        if(edge[DEST]>node_num) node_num = edge[DEST];
+    }
+    node_num++;
+    //cout<<"Create matrix success!"<<endl;
+}
+
 
 //translate string into int array
 void resolve(char *e, int* result){
@@ -299,8 +448,8 @@ void dijkstra(int s, int d, int setflag){
     for(int i=0;i<Vs[1-setflag].size();i++){
         known[Vs[1-setflag][i]] = true;
     }
-    if(s != source) known[source] = true;
-    if(d != destination) known[destination] = true;
+    if(s != source && d !=source) known[source] = true;
+    if(d != destination && s !=destination) known[destination] = true;
 
     distance[s] = 0;
 
@@ -358,7 +507,6 @@ path mergePath(path p1, path p2){
     for(int i=0;i<p2.edges.size();i++){
         p.edges.push_back(p2.edges[i]);
     }
-    p.passNodes = p1.passNodes + 1;
 
     return p;
 }

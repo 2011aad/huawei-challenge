@@ -79,11 +79,20 @@ public:
         }
         return passNodes;
     }
+
+    void reverse(){
+        int tmp = this->src;
+        this->src = this->dest;
+        this->dest = tmp;
+        std::reverse(this->nodes.begin(),this->nodes.end());
+        std::reverse(this->edges.begin(),this->edges.end());
+    }
 };
 
 void search_route(char *graph[MAX_EDGE_NUM], int edge_num, char *condition[MAX_DEMAND_NUM], int demand_num);
 void resolve(char * e, int* result);
 void create_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector<neighbor> > &m);
+void create_inverse_matrix(char *topo[5000], int edge_num, int &node_num, vector< vector<neighbor> > &m);
 void resolve_demand(char *e[], int &source, int &dest, vector< vector<int> > &Vs);
 void dijkstra(int s, int d, int setflag);
 path mergePath(path p1, path p2);
